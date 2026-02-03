@@ -506,6 +506,8 @@ function RoClothes(Player)
 		env.gca = missing("function", getcustomasset)
 	end
 	-- variables --
+	local hidden = true
+	
 	local Mouse = Player:GetMouse()
 
 	local Method2CharacterFolder = game.Workspace:FindFirstChild("Method2CharacterFolder")
@@ -532,8 +534,6 @@ function RoClothes(Player)
 	local hpKEYBIND = Enum.KeyCode.Equals
 	local dpKEYBIND = Enum.KeyCode.Minus
 	-- you probably shouldnt edit these --
-	
-	local hidden = true
 	
 	local maxFPersonMethod = 6
 	local KeybindDetect = false
@@ -665,11 +665,11 @@ function RoClothes(Player)
 			CockScale = 1,
 			BreastsScale = 1,
 			ButtsScale = 1,
-			LegsScale = 1,
+			LegsScale = 1.1,
 			BreastsType = 1,
-			TorsoType = 1,
-			ArmType = 1,
-			LegsType = 1,
+			TorsoType = 3,
+			ArmType = 2,
+			LegsType = 3,
 			ButtType = 1,
 			ToggleBBC = false,
 			Cooldown = false,
@@ -678,7 +678,6 @@ function RoClothes(Player)
 			FPerson = false,
 			HeadTracking = true,
 			RealtimeBodyTransparency = true,
-			OldTransparency = {},
 
 			TopRipped = false,
 			BottomRipped = false,
@@ -728,6 +727,7 @@ function RoClothes(Player)
 				BodyPartPhysics = {},
 				physicsTails = {},
 				AreolaDecal = {},
+				OldTransparency = {},
 			},
 			ConvertedPart = {}
 		}
@@ -9643,10 +9643,10 @@ function RoClothes(Player)
 			},
 			["Accessory"] = {
 				82879052599298,
-				120729210458213,
-				17590602534,
-				73567120581664
+				109188815319909,
+				17590602534
 			},
+			["TailAccessory"] = {73567120581664},
 			["Clothes"] = {
 				["Shirt"] = 121936175724069,
 				["Pants"] = 107910834770771,
@@ -9656,6 +9656,78 @@ function RoClothes(Player)
 				"Roblox Shirt",
 				"Roblox Butt Shirt",
 				"Roblox Pants",
+			},
+		},
+		["Datax"] = {
+			["NippleColor"] = Color3.fromRGB(0, 255, 0),
+			["Body Color"] = {
+				["HeadColor3"] = Color3.fromRGB(0, 0, 0),
+				["LeftArmColor3"] = Color3.fromRGB(0, 0, 0),
+				["RightArmColor3"] = Color3.fromRGB(0, 0, 0),
+				["LeftLegColor3"] = Color3.fromRGB(0, 0, 0),
+				["RightLegColor3"] = Color3.fromRGB(0, 0, 0),
+				["TorsoColor3"] = Color3.fromRGB(0, 0, 0),
+			},
+			["Accessory"] = {
+				119345726722178,
+				17225320544,
+				6839523948,
+				140493354533597,
+				7491680980,
+				106067586439689,
+				83144929901095
+			},
+			["Clothes"] = {
+				["Shirt"] = 6352152945,
+				["Pants"] = 6352162936,
+			},
+			["Clothing"] = {
+				"Roblox Shirt",
+				"Roblox Butt Shirt",
+				"Roblox Pants",
+				"Sock 2",
+				"Bodyless Clothes"
+			},
+			["Recolor"] = {
+				["Sock 2"] = {
+					["Primary"] = Color3.fromRGB(0, 50, 0),
+					["Secondary"] = Color3.fromRGB(0, 255, 0)
+				},
+				["Bodyless Clothes"] = {
+					["Primary"] = Color3.fromRGB(0, 50, 0)
+				}
+			},
+			["MeshEdit"] = {
+				["Left Sock 2"] = {
+					Size = Vector3.new(1.3580000257492065, 1.6050000190734863, 1.367999963760376),
+					Offset = Vector3.new(0,0,-.035),
+					Rotation = Vector3.new(2, 0, 0)
+				},
+				["Left Sock 2 Line"] = {
+					Size = Vector3.new(1.3300000286102295, 0.2630000114440918, 1.3399999856948853)
+				},
+				["Right Sock 2"] = {
+					Size = Vector3.new(1.3580000257492065, 1.6050000190734863, 1.367999963760376),
+					Offset = Vector3.new(0,0,-.035),
+					Rotation = Vector3.new(2, 0, 0)
+				},
+				["Right Sock 2 Line"] = {
+					Size = Vector3.new(1.3300000286102295, 0.2630000114440918, 1.3399999856948853)
+				},
+				["Bodyless Right Arm"] = {
+					Offset = Vector3.new(-0.06, 0.06, 0),
+					Rotation = Vector3.new(0, 0, 6)
+				},
+				["Bodyless Left Arm"] = {
+					Offset = Vector3.new(0.05, 0.06, 0),
+					Rotation = Vector3.new(0, 0, -7)
+				},
+			},
+			["Preset"] = {
+				Tone = "Use NippleColor",
+				TorsoType = 3,
+				ArmType = 2,
+				LegsType = 3
 			},
 		},
 		-- Clothing Bundles --
@@ -13927,7 +13999,7 @@ function RoClothes(Player)
 
 				if Handle then
 					if PlayerData[Data].CurrentBundle ~= "nil" then
-						Handle.Transparency = 1
+						--Handle.Transparency = 1
 
 						PlayerData[Data].CurrentPartList.ParentTransparency[Handle] = {D = 0, T = 1}
 					else
@@ -14137,16 +14209,21 @@ function RoClothes(Player)
 
 		if AccessoryList ~= nil then
 			for _, Id in pairs(AccessoryList) do
-				local AccessoryInfo = MPS:GetProductInfo(Id)
-				local Type = AccessoryType[AccessoryInfo.AssetTypeId]
+				local success = pcall(function()
+					local AccessoryInfo = MPS:GetProductInfo(Id)
+					local Type = AccessoryType[AccessoryInfo.AssetTypeId]
 
-				if HumanoidDescription[Type] == "" then
-					HumanoidDescription[Type] = Id
+					if HumanoidDescription[Type] == "" then
+						HumanoidDescription[Type] = Id
+					else
+						HumanoidDescription[Type] = HumanoidDescription[Type]..", "..Id
+					end
+				end)
+				if not success then
+					warn('Accessory ID "'..Id..'" is invalid. Please make sure ID is an ACCESSORY and is not content deleted.' )
 				else
-					HumanoidDescription[Type] = HumanoidDescription[Type]..", "..Id
+					IsAdded = true
 				end
-
-				IsAdded = true
 			end
 		end
 
@@ -14630,6 +14707,13 @@ function RoClothes(Player)
 						Object.Transparency = D
 						Object.LocalTransparencyModifier = Object.Transparency
 					end
+				end
+			end
+			
+			if PartListPlayer.OldTransparency then
+				for i, v in pairs(PartListPlayer.OldTransparency) do
+					i.Transparency = v
+					i.LocalTransparencyModifier = v
 				end
 			end
 
@@ -15655,7 +15739,7 @@ function RoClothes(Player)
 			end
 
 			if FaceDecal and DataDetail.Face == false then
-				FaceDecal.Transparency = 1
+				--FaceDecal.Transparency = 1
 				DataDetail.CurrentPartList.ParentTransparency[FaceDecal] = {D = 0, T = 1}
 			end
 			task.wait()
@@ -16069,252 +16153,261 @@ function RoClothes(Player)
 
 
 
-	if RS:IsClient() and not RS:IsStudio() then
-		local function toJSON(t)
-			for i, v in pairs(t) do
-				if typeof(v) == "table" then
-					toJSON(v)
+	local loadDataSuccess = pcall(function()
+		if RS:IsClient() and not RS:IsStudio() then
+			local function toJSON(t)
+				for i, v in pairs(t) do
+					if typeof(v) == "table" then
+						toJSON(v)
+					else
+						t[i] = Function.convertToJSON(v)
+					end
+				end
+			end
+			local function fromJSON(t)
+				for i, v in pairs(t) do
+					local value,original = Function.convertFromJSON(v)
+					t[i] = value
+					if typeof(v) == "table" and original then
+						fromJSON(v)
+					end
+				end
+			end
+
+			if env.makefolder and env.isfolder and env.readfile and env.writefile and env.delfile and env.listfiles and env.isfile then
+				if not env.isfolder("RClothesLerp") then
+					env.makefolder("RClothesLerp")
+				end
+				if not env.isfolder("RClothesLerp/Bundles") then
+					env.makefolder("RClothesLerp/Bundles")
+				end
+				if env.isfile("RClothesLerp/Settings.json") then
+					local settings = HS:JSONDecode(env.readfile("RClothesLerp/Settings.json"))
+					for i, v in pairs(settings) do
+						settings[i] = Function.convertFromJSON(v)
+					end
+					loadupBundle = settings.loadupBundle
+					loadupExecute = settings.loadupExecute
+					loadupClosed = settings.loadupClosed
+					KEYBIND = settings.KEYBIND or KEYBIND
+					hpKEYBIND = settings.hpKEYBIND or hpKEYBIND
+					dpKEYBIND = settings.dpKEYBIND or dpKEYBIND
+				end
+				if env.isfile("RClothesLerp/MobileButtonPlacement.json") then
+					local settings = HS:JSONDecode(env.readfile("RClothesLerp/MobileButtonPlacement.json"))
+					for i, v in pairs(settings) do
+						settings[i] = Function.convertFromJSON(v)
+					end
+					task.delay(0,function()
+						GUIObject.ImageHeal.Position = settings.HealPos
+						GUIObject.ImageTear.Position = settings.TearPos
+					end)
+				end
+				if env.isfile("RClothesLerp/BundleLoader.json") then
+					local decode = HS:JSONDecode(env.readfile("RClothesLerp/BundleLoader.json"))
+					fromJSON(decode)
+
+					local bundleAmount = 0
+					for name, bundle in pairs(decode) do
+						bundleAmount += 1
+						bundle["BundleName"] = nil
+						Bundle[name] = bundle
+					end
+					task.spawn(function() -- compile overtime --
+						local timeOut = 1000
+						local amount = 0
+						local filesFound = env.listfiles("RClothesLerp/Bundles")
+						if #filesFound <= 0 then
+							repeat
+								task.wait()
+								filesFound = env.listfiles("RClothesLerp/Bundles")
+								timeOut -= 1
+							until timeOut <= 0 or #filesFound > 0
+						end
+						local tab = {}
+						for i, v in pairs(filesFound) do
+							if env.isfile(v) then
+								local b = HS:JSONDecode(env.readfile(v))
+								local storedName = b.BundleName
+								b["BundleName"] = nil
+
+								fromJSON(b)
+
+								Bundle[storedName] = b
+								local asset = {}
+								local function transferTable(n,isTable)
+									local newTable = {}
+									for i, v in pairs(n) do
+										if isTable then
+											if typeof(v) == "table" then
+												newTable[i] = transferTable(v,true)
+											else
+												newTable[i] = v
+											end
+										else
+											if typeof(v) == "table" then
+												asset[i] = transferTable(v,true)
+											else
+												asset[i] = v
+											end
+										end
+									end
+									return newTable
+								end
+								transferTable(b)
+								tab[storedName] = asset
+								if not decode[storedName] then
+								end
+							end
+						end
+
+						if #filesFound > 0 then
+							toJSON(tab)
+							env.writefile("RClothesLerp/BundleLoader.json", HS:JSONEncode(tab))
+						elseif env.isfile("RClothesLerp/BundleLoader.json") then
+							warn("No bundles. Is this an error?")
+							env.delfile("RClothesLerp/BundleLoader.json")
+						end
+					end)
 				else
-					t[i] = Function.convertToJSON(v)
-				end
-			end
-		end
-		local function fromJSON(t)
-			for i, v in pairs(t) do
-				local value,original = Function.convertFromJSON(v)
-				t[i] = value
-				if typeof(v) == "table" and original then
-					fromJSON(v)
-				end
-			end
-		end
+					warn("Quick loader was not detected, using alternative method.")
+					local filesFound = env.listfiles("RClothesLerp/Bundles")
+					local t = {}
+					for i, v in pairs(filesFound) do
+						if env.isfile(v) then
+							local b = HS:JSONDecode(env.readfile(v))
+							local storedName = b.BundleName
+							b["BundleName"] = nil
 
-		if env.makefolder and not env.isfolder("RClothesLerp") then
-			env.makefolder("RClothesLerp")
-		end
-		if env.makefolder and not env.isfolder("RClothesLerp/Bundles") then
-			env.makefolder("RClothesLerp/Bundles")
-		end
-		if env.isfile("RClothesLerp/Settings.json") then
-			local settings = HS:JSONDecode(env.readfile("RClothesLerp/Settings.json"))
-			for i, v in pairs(settings) do
-				settings[i] = Function.convertFromJSON(v)
-			end
-			loadupBundle = settings.loadupBundle
-			loadupExecute = settings.loadupExecute
-			loadupClosed = settings.loadupClosed
-			KEYBIND = settings.KEYBIND or KEYBIND
-			hpKEYBIND = settings.hpKEYBIND or hpKEYBIND
-			dpKEYBIND = settings.dpKEYBIND or dpKEYBIND
-		end
-		if env.isfile("RClothesLerp/MobileButtonPlacement.json") then
-			local settings = HS:JSONDecode(env.readfile("RClothesLerp/MobileButtonPlacement.json"))
-			for i, v in pairs(settings) do
-				settings[i] = Function.convertFromJSON(v)
-			end
-			task.delay(0,function()
-				GUIObject.ImageHeal.Position = settings.HealPos
-				GUIObject.ImageTear.Position = settings.TearPos
-			end)
-		end
-		if env.isfile("RClothesLerp/BundleLoader.json") then
-			local decode = HS:JSONDecode(env.readfile("RClothesLerp/BundleLoader.json"))
-			fromJSON(decode)
+							fromJSON(b)
+							Bundle[storedName] = b
 
-			local bundleAmount = 0
-			for name, bundle in pairs(decode) do
-				bundleAmount += 1
-				bundle["BundleName"] = nil
-				Bundle[name] = bundle
-			end
-			task.spawn(function() -- compile overtime --
-				local timeOut = 1000
-				local amount = 0
-				local filesFound = env.listfiles("RClothesLerp/Bundles")
-				if #filesFound <= 0 then
-					repeat
-						task.wait()
-						filesFound = env.listfiles("RClothesLerp/Bundles")
-						timeOut -= 1
-					until timeOut <= 0 or #filesFound > 0
-				end
-				local tab = {}
-				for i, v in pairs(filesFound) do
-					if env.isfile(v) then
-						local b = HS:JSONDecode(env.readfile(v))
-						local storedName = b.BundleName
-						b["BundleName"] = nil
-
-						fromJSON(b)
-
-						Bundle[storedName] = b
-						local asset = {}
-						local function transferTable(n,isTable)
-							local newTable = {}
-							for i, v in pairs(n) do
-								if isTable then
-									if typeof(v) == "table" then
-										newTable[i] = transferTable(v,true)
+							local asset = {}
+							local function transferTable(n,isTable)
+								local newTable = {}
+								for i, v in pairs(n) do
+									if isTable then
+										if typeof(v) == "table" then
+											newTable[i] = transferTable(v,true)
+										else
+											newTable[i] = v
+										end
 									else
-										newTable[i] = v
-									end
-								else
-									if typeof(v) == "table" then
-										asset[i] = transferTable(v,true)
-									else
-										asset[i] = v
+										if typeof(v) == "table" then
+											asset[i] = transferTable(v,true)
+										else
+											asset[i] = v
+										end
 									end
 								end
+								return newTable
 							end
-							return newTable
-						end
-						transferTable(b)
-						tab[storedName] = asset
-						if not decode[storedName] then
+							transferTable(b)
+							t[storedName] = asset
 						end
 					end
-				end
 
-				if #filesFound > 0 then
-					toJSON(tab)
-					env.writefile("RClothesLerp/BundleLoader.json", HS:JSONEncode(tab))
-				elseif env.isfile("RClothesLerp/BundleLoader.json") then
-					warn("No bundles. Is this an error?")
-					env.delfile("RClothesLerp/BundleLoader.json")
-				end
-			end)
-		else
-			warn("Quick loader was not detected, using alternative method.")
-			local filesFound = env.listfiles("RClothesLerp/Bundles")
-			local t = {}
-			for i, v in pairs(filesFound) do
-				if env.isfile(v) then
-					local b = HS:JSONDecode(env.readfile(v))
-					local storedName = b.BundleName
-					b["BundleName"] = nil
+					local failed = false
+					if #filesFound > 0 then
+						toJSON(t)
+						env.writefile("RClothesLerp/BundleLoader.json", HS:JSONEncode(t))
+					else
+						failed = true
+						warn("No files were found.")
+					end
+					task.spawn(function() -- compile overtime --
+						local timeOut = 500
+						local amount = 0
+						local filesFound = env.listfiles("RClothesLerp/Bundles")
+						if #filesFound <= 0 then
+							repeat
+								task.wait()
+								filesFound = env.listfiles("RClothesLerp/Bundles")
+								timeOut -= 1
+							until timeOut <= 0 or #filesFound > 0
+						end
+						local t = {}
+						for i, v in pairs(filesFound) do
+							if env.isfile(v) then
+								local b = HS:JSONDecode(env.readfile(v))
+								local storedName = b.BundleName
+								b["BundleName"] = nil
 
-					fromJSON(b)
-					Bundle[storedName] = b
+								fromJSON(b)
+								Bundle[storedName] = b
 
-					local asset = {}
-					local function transferTable(n,isTable)
-						local newTable = {}
-						for i, v in pairs(n) do
-							if isTable then
-								if typeof(v) == "table" then
-									newTable[i] = transferTable(v,true)
-								else
-									newTable[i] = v
+								local asset = {}
+								local function transferTable(n,isTable)
+									local newTable = {}
+									for i, v in pairs(n) do
+										if isTable then
+											if typeof(v) == "table" then
+												newTable[i] = transferTable(v,true)
+											else
+												newTable[i] = v
+											end
+										else
+											if typeof(v) == "table" then
+												asset[i] = transferTable(v,true)
+											else
+												asset[i] = v
+											end
+										end
+									end
+									return newTable
 								end
-							else
-								if typeof(v) == "table" then
-									asset[i] = transferTable(v,true)
-								else
-									asset[i] = v
-								end
+								transferTable(b)
+								t[storedName] = asset
 							end
 						end
-						return newTable
-					end
-					transferTable(b)
-					t[storedName] = asset
+
+						if #filesFound > 0 then
+							toJSON(t)
+							env.writefile("RClothesLerp/BundleLoader.json", HS:JSONEncode(t))
+							if failed == true then
+								warn("Failsafe has found files, script reload is required to load bundles!")
+							end
+						end
+					end)
 				end
-			end
-			
-			local failed = false
-			if #filesFound > 0 then
-				toJSON(t)
-				env.writefile("RClothesLerp/BundleLoader.json", HS:JSONEncode(t))
 			else
-				failed = true
-				warn("No files were found.")
+				warn("Executor is not compatible for saving data!")
 			end
-			task.spawn(function() -- compile overtime --
-				local timeOut = 500
-				local amount = 0
-				local filesFound = env.listfiles("RClothesLerp/Bundles")
-				if #filesFound <= 0 then
-					repeat
-						task.wait()
-						filesFound = env.listfiles("RClothesLerp/Bundles")
-						timeOut -= 1
-					until timeOut <= 0 or #filesFound > 0
+		elseif RS:IsStudio() then
+			if script:FindFirstChild("loadupSettings") then
+				local loadupSettings = require(script.loadupSettings)
+				if loadupSettings.loadupBundle then
+					loadupBundle = loadupSettings.loadupBundle
 				end
-				local t = {}
-				for i, v in pairs(filesFound) do
-					if env.isfile(v) then
-						local b = HS:JSONDecode(env.readfile(v))
-						local storedName = b.BundleName
-						b["BundleName"] = nil
-
-						fromJSON(b)
-						Bundle[storedName] = b
-
-						local asset = {}
-						local function transferTable(n,isTable)
-							local newTable = {}
-							for i, v in pairs(n) do
-								if isTable then
-									if typeof(v) == "table" then
-										newTable[i] = transferTable(v,true)
-									else
-										newTable[i] = v
-									end
-								else
-									if typeof(v) == "table" then
-										asset[i] = transferTable(v,true)
-									else
-										asset[i] = v
-									end
-								end
-							end
-							return newTable
-						end
-						transferTable(b)
-						t[storedName] = asset
-					end
+				if loadupSettings.loadupExecute then
+					loadupExecute = loadupSettings.loadupExecute
 				end
-
-				if #filesFound > 0 then
-					toJSON(t)
-					env.writefile("RClothesLerp/BundleLoader.json", HS:JSONEncode(t))
-					if failed == true then
-						warn("Failsafe has found files, script reload is required to load bundles!")
-					end
+				if loadupSettings.loadupClosed then
+					loadupClosed = loadupSettings.loadupClosed
 				end
-			end)
-		end
-	elseif RS:IsStudio() then
-		if script:FindFirstChild("loadupSettings") then
-			local loadupSettings = require(script.loadupSettings)
-			if loadupSettings.loadupBundle then
-				loadupBundle = loadupSettings.loadupBundle
+				if loadupSettings.loadupFPerson then
+					loadupFPerson = loadupSettings.loadupFPerson
+				end
+				if loadupSettings.KEYBIND then
+					KEYBIND = loadupSettings.KEYBIND
+				end
+				if loadupSettings.hpKEYBIND then
+					hpKEYBIND = loadupSettings.hpKEYBIND
+				end
+				if loadupSettings.dpKEYBIND then
+					dpKEYBIND = loadupSettings.dpKEYBIND
+				end
 			end
-			if loadupSettings.loadupExecute then
-				loadupExecute = loadupSettings.loadupExecute
-			end
-			if loadupSettings.loadupClosed then
-				loadupClosed = loadupSettings.loadupClosed
-			end
-			if loadupSettings.loadupFPerson then
-				loadupFPerson = loadupSettings.loadupFPerson
-			end
-			if loadupSettings.KEYBIND then
-				KEYBIND = loadupSettings.KEYBIND
-			end
-			if loadupSettings.hpKEYBIND then
-				hpKEYBIND = loadupSettings.hpKEYBIND
-			end
-			if loadupSettings.dpKEYBIND then
-				dpKEYBIND = loadupSettings.dpKEYBIND
+			if script:FindFirstChild("myBundles") then
+				local myBundles = require(script.myBundles)
+				for i, v in pairs(myBundles) do
+					Bundle[i] = v
+				end
 			end
 		end
-		if script:FindFirstChild("myBundles") then
-			local myBundles = require(script.myBundles)
-			for i, v in pairs(myBundles) do
-				Bundle[i] = v
-			end
-		end
+	end)
+	if not loadDataSuccess then
+		warn("Data saving failed compatibility! Executor might not be compatible for saving data!")
 	end
 
 	--[[
@@ -17673,8 +17766,23 @@ function RoClothes(Player)
 								specialHead = true
 								BodySize = BodyPartSize["HeadScale"]
 							else
-								CalcSize = SM.Scale
-								BodySize = BodyPartSize["HeadScale"]
+								local success, trueSize = pcall(function()
+									if not DataList.CurrentPartList["TrueMeshSize"] 
+										or DataList.CurrentPartList["TrueMeshSize"].MeshId ~= SM.MeshId then
+										DataList.CurrentPartList["TrueMeshSize"] = {
+											Part=IS:CreateMeshPartAsync(SM.MeshId, Enum.CollisionFidelity.Box, Enum.RenderFidelity.Performance),
+											ID=SM.MeshId
+										}
+									end
+									return DataList.CurrentPartList["TrueMeshSize"].Part
+								end)
+								if success then
+									CalcSize = trueSize.Size*SM.Scale
+									BodySize = BodyPartSize["HeadMeshFix"]
+								else
+									CalcSize = SM.Scale
+									BodySize = BodyPartSize["HeadScale"]
+								end
 							end
 						end
 
@@ -17768,8 +17876,8 @@ function RoClothes(Player)
 						if Method == 2 or Method == 3 then
 							Base = DataList.Character:FindFirstChild(Base.Name)
 						end
-						if --Part.Transparency == PlayerData[PlayerName].OldTransparency[Base] and 
-							Base.Transparency ~= DataList.OldTransparency[Base] then
+						if --Part.Transparency == PlayerData[PlayerName].CurrentPartList.OldTransparency[Base] and 
+							Base.Transparency ~= DataList.CurrentPartList.OldTransparency[Base] then
 							Part.Transparency = math.clamp(Base.Transparency,Part:GetAttribute("maxTransparencyRC") or -math.huge,math.huge)
 							updated = true
 						end
@@ -17880,8 +17988,23 @@ function RoClothes(Player)
 							specialHead = true
 							BodySize = BodyPartSize["HeadScale"]
 						else
-							CalcSize = SM.Scale
-							BodySize = BodyPartSize["HeadScale"]
+							local success, trueSize = pcall(function()
+								if not DataList.CurrentPartList["TrueMeshSize"] 
+									or DataList.CurrentPartList["TrueMeshSize"].MeshId ~= SM.MeshId then
+									DataList.CurrentPartList["TrueMeshSize"] = {
+										Part=IS:CreateMeshPartAsync(SM.MeshId, Enum.CollisionFidelity.Box, Enum.RenderFidelity.Performance),
+										ID=SM.MeshId
+									}
+								end
+								return DataList.CurrentPartList["TrueMeshSize"].Part
+							end)
+							if success then
+								CalcSize = trueSize.Size*SM.Scale
+								BodySize = BodyPartSize["HeadMeshFix"]
+							else
+								CalcSize = SM.Scale
+								BodySize = BodyPartSize["HeadScale"]
+							end
 						end
 					end
 
@@ -18165,6 +18288,33 @@ function RoClothes(Player)
 					end
 				end
 			end
+
+			for Part, Property in pairs(DataList.CurrentPartList.ParentTransparency) do
+				local Removed = false
+
+				if Part.Parent == nil or Function.IsParentNil(Part) or Function.FallenPartCheck(Part) then
+					DataList.CurrentPartList.ParentTransparency[Part] = nil
+
+					Removed = true
+				end
+
+				if Removed == false then
+					local T = Property.T
+
+					if T then
+						if PlayerData[PlayerName].RealtimeBodyTransparency == true then
+							PlayerData[PlayerName].CurrentPartList.OldTransparency[Part] = Part.Transparency
+							Part.LocalTransparencyModifier = T
+						else
+							if not PlayerData[PlayerName].CurrentPartList.OldTransparency[Part] then
+								PlayerData[PlayerName].CurrentPartList.OldTransparency[Part] = Part.Transparency
+							end
+							Part.Transparency = T
+						end
+					end
+				end
+			end
+			
 			for Part, Property in pairs(DataList.CurrentPartList.TransparencyLink) do
 				local Removed = false
 
@@ -18183,29 +18333,6 @@ function RoClothes(Player)
 
 					Part.LocalTransparencyModifier = math.clamp(Property.T.LocalTransparencyModifier,D,math.huge)
 					Part.Transparency = math.clamp(T,D,math.huge)
-				end
-			end
-
-			for Part, Property in pairs(DataList.CurrentPartList.ParentTransparency) do
-				local Removed = false
-
-				if Part.Parent == nil or Function.IsParentNil(Part) or Function.FallenPartCheck(Part) then
-					DataList.CurrentPartList.ParentTransparency[Part] = nil
-
-					Removed = true
-				end
-
-				if Removed == false then
-					local T = Property.T
-
-					if T then
-						PlayerData[PlayerName].OldTransparency[Part] = Part.Transparency
-						if PlayerData[PlayerName].RealtimeBodyTransparency == true then
-							Part.LocalTransparencyModifier = T
-						else
-							Part.Transparency = T
-						end
-					end
 				end
 			end
 
