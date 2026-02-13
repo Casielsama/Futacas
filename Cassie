@@ -482,6 +482,10 @@ function RoClothes(Player)
 	GUIObject.FPersonLoadupButton = Instance.new("TextButton")
 	GUIObject.importBundle = Instance.new("Frame")
 	GUIObject.importBundleBox = Instance.new("TextBox")
+	GUIObject.exportBox = Instance.new("Frame")
+	GUIObject.exportButton = Instance.new("TextButton")
+	GUIObject.delFrame = Instance.new("Frame")
+	GUIObject.delButton = Instance.new("TextButton")
 
 	GUIObject.HPListFrame = Instance.new("ScrollingFrame")
 	GUIObject.HealButton = Instance.new("TextButton")
@@ -504,6 +508,7 @@ function RoClothes(Player)
 		env.makefolder = missing("function", makefolder)
 		env.isfolder = missing("function", isfolder)
 		env.gca = missing("function", getcustomasset)
+		env.copy = missing("function", setclipboard)
 	end
 	-- variables --
 	local hidden = true
@@ -643,7 +648,7 @@ function RoClothes(Player)
 			MeshSizeLock = false,
 			AccessorySizeLock = false,
 			MeshBasePartInvisible = false,
-			BodyPartPhysics = false,
+			BodyPartPhysics = true,
 			PhysicsObeyGravity = true,
 			CatalogUsername = "",
 			CatalogOutfitId = "",
@@ -662,8 +667,8 @@ function RoClothes(Player)
 			CatalogRemove = {},
 			SkinTone = nil,
 			NippleColor = nil,
-			CockScale = 1,
-			BreastsScale = 1,
+			CockScale = 1.4,
+			BreastsScale = 1.15,
 			ButtsScale = 1,
 			LegsScale = 1.1,
 			BreastsType = 1,
@@ -678,6 +683,7 @@ function RoClothes(Player)
 			FPerson = false,
 			HeadTracking = true,
 			RealtimeBodyTransparency = true,
+			OldTransparency = {},
 
 			TopRipped = false,
 			BottomRipped = false,
@@ -727,7 +733,7 @@ function RoClothes(Player)
 				BodyPartPhysics = {},
 				physicsTails = {},
 				AreolaDecal = {},
-				OldTransparency = {},
+				OriginalTransparency = {},
 			},
 			ConvertedPart = {}
 		}
@@ -9722,6 +9728,12 @@ function RoClothes(Player)
 					Offset = Vector3.new(0.05, 0.06, 0),
 					Rotation = Vector3.new(0, 0, -7)
 				},
+				["Bodyless Neck"] = {
+					Size = Vector3.new(0,0,0),
+				},
+				["Bodyless Shirt"] = {
+					Size = Vector3.new(0,0,0),
+				},
 			},
 			["Preset"] = {
 				Tone = "Use NippleColor",
@@ -11644,9 +11656,11 @@ function RoClothes(Player)
 		for i = 1, 6 do
 			local Texture = Instance.new("Decal", ObjectInstance)
 			Texture.Texture = "rbxasset://RClothesContent/colorableFreckles.png"
-			if oldObjectInstance then
-				Texture.Color3 = oldObjectInstance.Color
-			end
+			task.delay(0,function()
+				if oldObjectInstance then
+					Texture.Color3 = oldObjectInstance.Color
+				end
+			end)
 			Texture.Transparency = transparency
 			PlayerData[Data].CurrentPartList.TransparencyLink[Texture] = {T=ObjectInstance,Define=transparency}
 
@@ -12128,34 +12142,56 @@ function RoClothes(Player)
 	end
 
 	function Function.ShirtTexture(ObjectInstance, Character, Extra, Data)	
-		if Extra.Shirt and table.find(PlayerData[Data].CurrentClothes, "Roblox Shirt") then
-			local SP = Instance.new("SurfaceAppearance", ObjectInstance)
-			SP.ColorMap = Extra.Shirt.ShirtTemplate
+		if Extra.Shirt and Extra.Shirt.ShirtTemplate and table.find(PlayerData[Data].CurrentClothes, "Roblox Shirt") then
+			if ObjectInstance.Material == Enum.Material.Glass then
+				ObjectInstance.TextureID = Extra.Shirt.ShirtTemplate
+			else
+				local SP = Instance.new("SurfaceAppearance", ObjectInstance)
+				SP.ColorMap = Extra.Shirt.ShirtTemplate
+			end
 		end
 	end
 
 	function Function.PantsTexture(ObjectInstance, Character, Extra, Data)
-		if Extra.Pants and table.find(PlayerData[Data].CurrentClothes, "Roblox Pants") then
-			local SP = Instance.new("SurfaceAppearance", ObjectInstance)
-			SP.ColorMap = Extra.Pants.PantsTemplate
+		if Extra.Pants and Extra.Pants.PantsTemplate and table.find(PlayerData[Data].CurrentClothes, "Roblox Pants") then
+			if ObjectInstance.Material == Enum.Material.Glass then
+				ObjectInstance.TextureID = Extra.Pants.PantsTemplate
+			else
+				local SP = Instance.new("SurfaceAppearance", ObjectInstance)
+				SP.ColorMap = Extra.Pants.PantsTemplate
+			end
 		end
 	end
 
 	function Function.TorsoShirtTexture(ObjectInstance, Character, Extra, Data)
-		if Extra.Shirt and (table.find(PlayerData[Data].CurrentClothes, "Roblox Shirt") or table.find(PlayerData[Data].CurrentClothes, "New Woman") or table.find(PlayerData[Data].CurrentClothes, "Roblox Breasts Clothing")) then
-			local SP = Instance.new("SurfaceAppearance", ObjectInstance)
-			SP.ColorMap = Extra.Shirt.ShirtTemplate
-			SP.AlphaMode = Enum.AlphaMode.Transparency
-			ObjectInstance.Transparency = 0
+		if Extra.Shirt and Extra.Shirt.ShirtTemplate and (table.find(PlayerData[Data].CurrentClothes, "Roblox Shirt") or table.find(PlayerData[Data].CurrentClothes, "New Woman") or table.find(PlayerData[Data].CurrentClothes, "Roblox Breasts Clothing")) then
+			if ObjectInstance.Material == Enum.Material.Glass or ObjectInstance:HasTag("RCGlassMat") then
+				ObjectInstance.TextureID = Extra.Shirt.ShirtTemplate
+				if ObjectInstance.Transparency < 1 then
+					ObjectInstance.Transparency = 0.011
+				end
+			else
+				local SP = Instance.new("SurfaceAppearance", ObjectInstance)
+				SP.ColorMap = Extra.Shirt.ShirtTemplate
+				SP.AlphaMode = Enum.AlphaMode.Transparency
+				ObjectInstance.Transparency = 0
+			end
 		end
 	end
 
 	function Function.TorsoPantsTexture(ObjectInstance, Character, Extra, Data)
-		if Extra.Pants and (table.find(PlayerData[Data].CurrentClothes, "Roblox Pants") or table.find(PlayerData[Data].CurrentClothes, "Roblox Breasts Clothing")) then
-			local SP = Instance.new("SurfaceAppearance", ObjectInstance)
-			SP.ColorMap = Extra.Pants.PantsTemplate
-			SP.AlphaMode = Enum.AlphaMode.Transparency
-			ObjectInstance.Transparency = 0
+		if Extra.Pants and Extra.Pants.PantsTemplate and (table.find(PlayerData[Data].CurrentClothes, "Roblox Pants")) then
+			if ObjectInstance.Material == Enum.Material.Glass or ObjectInstance:HasTag("RCGlassMat") then
+				ObjectInstance.TextureID = Extra.Pants.PantsTemplate
+				if ObjectInstance.Transparency < 1 then
+					ObjectInstance.Transparency = 0.011
+				end
+			else
+				local SP = Instance.new("SurfaceAppearance", ObjectInstance)
+				SP.ColorMap = Extra.Pants.PantsTemplate
+				SP.AlphaMode = Enum.AlphaMode.Transparency
+				ObjectInstance.Transparency = 0
+			end
 		end
 	end
 
@@ -12394,7 +12430,13 @@ function RoClothes(Player)
 		local PData = PlayerData[Data]
 		local appliedOrgans = {
 			PData.CurrentPartList["Organ"]["Left Arm"],
-			PData.CurrentPartList["Organ"]["Right Arm"]
+			PData.CurrentPartList["Organ"]["Right Arm"],
+		}
+		local appliedTOrgans = {
+			PData.CurrentPartList["Clothes"]["Torso Shirt"],
+			PData.CurrentPartList["Clothes"]["Breasts Shirt"],
+			PData.CurrentPartList["Clothes"]["Breasts Shirt 2"],
+			PData.CurrentPartList["Clothes"]["Breasts Shirt 3"]
 		}
 		if Visible == false then
 			for i, v in pairs(appliedOrgans) do
@@ -12415,8 +12457,28 @@ function RoClothes(Player)
 					end
 				end
 			end
+			for i, v in pairs(appliedTOrgans) do
+				if v:FindFirstChild(v.Name.. "OILOVERLAY") then
+					local s = v:FindFirstChild(v.Name.. "OILOVERLAY")
+					if PData.HPClothes.Shirt ~= "" and not tonumber(PData.HPClothes.Shirt) then
+						s.TextureID = PData.HPClothes.Shirt.ShirtTemplate
+					else
+						s.Transparency = 1
+						s:SetAttribute("MaxTransparenyRC",1)
+					end
+				else
+					if PData.HPClothes.Shirt ~= "" and not tonumber(PData.HPClothes.Shirt) then
+						if v.Name == "Torso Shirt" then
+							v:SetAttribute("maxDeterminedRC",false)
+							v:SetAttribute("MaxTransparenyRC",nil)
+							v.Transparency = v.Parent.Transparency
+						end
+						Function.TorsoShirtTexture(v,nil,{Shirt = PData.HPClothes.Shirt},Data)
+					end
+				end
+			end
 
-			if PData.HPClothes.Shirt ~= "" and not tonumber(PData.HPClothes.Shirt) then
+			--[[if PData.HPClothes.Shirt ~= "" and not tonumber(PData.HPClothes.Shirt) then
 				if not PData.HPClothes.Pants then
 					local v = PData.CurrentPartList["Organ"]["Torso"]
 					if v:FindFirstChild(v.Name.. "OILOVERLAY") then
@@ -12426,7 +12488,7 @@ function RoClothes(Player)
 						Function.ShirtTexture(PData.CurrentPartList["Organ"]["Torso"],c,{Shirt = PData.HPClothes.Shirt},Data)
 					end
 				end
-			end
+			end]]
 		else
 			for i, v in pairs(appliedOrgans) do
 				if v:FindFirstChild(v.Name.. "OILOVERLAY") then
@@ -12444,8 +12506,24 @@ function RoClothes(Player)
 					end
 				end
 			end
+			for i, v in pairs(appliedTOrgans) do
+				if v:FindFirstChild(v.Name.. "OILOVERLAY") then
+					local s = v:FindFirstChild(v.Name.. "OILOVERLAY")
+					if c:FindFirstChildOfClass("Shirt") then
+						s:SetAttribute("MaxTransparenyRC",nil)
+						s.TextureID = c:FindFirstChildOfClass("Shirt").ShirtTemplate
+					end
+				else
+					if v:FindFirstChildOfClass("SurfaceAppearance") then
+						v:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
+					end
+					if c:FindFirstChildOfClass("Shirt") then
+						Function.TorsoShirtTexture(v,c,{Shirt = c:FindFirstChildOfClass("Shirt")},Data)
+					end
+				end
+			end
 
-			local v = PData.CurrentPartList["Organ"]["Torso"]
+			--[[local v = PData.CurrentPartList["Organ"]["Torso"]
 			if (not c:FindFirstChildOfClass("Pants") or not PData.HPClothes.Pants) and v:FindFirstChildOfClass("SurfaceAppearance") then
 				if v:FindFirstChild(v.Name.. "OILOVERLAY") then
 					local s = v:FindFirstChild(v.Name.. "OILOVERLAY")
@@ -12453,7 +12531,7 @@ function RoClothes(Player)
 				else
 					PData.CurrentPartList["Organ"]["Torso"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
 				end
-			end
+			end]]
 		end
 	end
 
@@ -12464,7 +12542,10 @@ function RoClothes(Player)
 			PData.CurrentPartList["Organ"]["Left Leg"],
 			PData.CurrentPartList["Organ"]["Right Leg"],
 			PData.CurrentPartList["Organ"]["Left Butt"],
-			PData.CurrentPartList["Organ"]["Right Butt"]
+			PData.CurrentPartList["Organ"]["Right Butt"],
+			PData.CurrentPartList["Organ"]["Breasts Pants"],
+			PData.CurrentPartList["Organ"]["Breasts Pants 2"],
+			PData.CurrentPartList["Organ"]["Breasts Pants 3"]
 		}
 
 		if Visible == false then
@@ -12532,6 +12613,14 @@ function RoClothes(Player)
 			end
 		end
 	end
+
+	function Function.ShirtPop(Visible, Character, Data, Clothing)
+		local PData = PlayerData[Data]
+		if Visible == false then
+			
+		end
+	end
+
 
 	function Function.CumBreastTypeSupport(ObjectInstance, Character, Extra, Data)
 		local function adjustSize(SIZE,CFRAME,CFRAME1)
@@ -13296,6 +13385,19 @@ function RoClothes(Player)
 			end
 		end
 		return value,true
+	end
+	
+	function Function.toFormatString(value)
+		if typeof(value) == "Color3" then
+			return string.format("Color3.fromRGB(%s, %s, %s)", value.R * 255, value.G * 255, value.B * 255)
+		elseif typeof(value) == "Vector3" then
+			return string.format("Vector3.new(%s, %s, %s)", value.X, value.Y, value.Z)
+		elseif typeof(value) == "string" then
+			return string.format("%q", value)
+		elseif typeof(value) == "CFrame" then
+			return string.format("CFrame.new(%s)", tostring(value))
+		end
+		return tostring(value)
 	end
 
 	function Function.JaroSimilarity(original: string, target: string): number
@@ -14208,23 +14310,28 @@ function RoClothes(Player)
 		local IsAdded = false
 
 		if AccessoryList ~= nil then
+			local amountFinished = 0
 			for _, Id in pairs(AccessoryList) do
-				local success = pcall(function()
-					local AccessoryInfo = MPS:GetProductInfo(Id)
-					local Type = AccessoryType[AccessoryInfo.AssetTypeId]
+				task.spawn(function()
+					local success, output = pcall(function()
+						local AccessoryInfo = MPS:GetProductInfo(Id)
+						local Type = AccessoryType[AccessoryInfo.AssetTypeId]
 
-					if HumanoidDescription[Type] == "" then
-						HumanoidDescription[Type] = Id
+						if HumanoidDescription[Type] == "" then
+							HumanoidDescription[Type] = Id
+						else
+							HumanoidDescription[Type] = HumanoidDescription[Type]..", "..Id
+						end
+					end)
+					if not success then
+						warn('Accessory ID "'..Id..'" is invalid. Please make sure ID is an ACCESSORY and is not content deleted. ('.. output .. ")")
 					else
-						HumanoidDescription[Type] = HumanoidDescription[Type]..", "..Id
+						IsAdded = true
 					end
+					amountFinished +=1
 				end)
-				if not success then
-					warn('Accessory ID "'..Id..'" is invalid. Please make sure ID is an ACCESSORY and is not content deleted.' )
-				else
-					IsAdded = true
-				end
 			end
+			repeat task.wait() until amountFinished >= #AccessoryList
 		end
 
 		if ClothesList ~= nil then
@@ -14477,8 +14584,8 @@ function RoClothes(Player)
 	function Function.AccessoryLoaderFunction(Character, CharacterAttachment, SelectBundle, Data)
 		local Human = Character:FindFirstChildOfClass("Humanoid")
 
-		local HumanoidDescription = Instance.new("HumanoidDescription", workspace)
-		local HumanoidDescriptionTail = Instance.new("HumanoidDescription", workspace)
+		local HumanoidDescription = Instance.new("HumanoidDescription", game)
+		local HumanoidDescriptionTail = Instance.new("HumanoidDescription", game)
 
 		local IsAdded = Function.HumanoidDescriptionSet(Bundle[SelectBundle]["Accessory"], Bundle[SelectBundle]["Clothes"], HumanoidDescription)
 		local IsTail = Function.HumanoidDescriptionSet(Bundle[SelectBundle]["TailAccessory"], nil, HumanoidDescriptionTail)
@@ -14710,8 +14817,8 @@ function RoClothes(Player)
 				end
 			end
 			
-			if PartListPlayer.OldTransparency then
-				for i, v in pairs(PartListPlayer.OldTransparency) do
+			if PartListPlayer.OriginalTransparency then
+				for i, v in pairs(PartListPlayer.OriginalTransparency) do
 					i.Transparency = v
 					i.LocalTransparencyModifier = v
 				end
@@ -15241,6 +15348,24 @@ function RoClothes(Player)
 
 				for _, v in pairs(AccessoryLoaderModel:GetChildren()) do
 					if v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") then
+						local function convertId(id)
+							local success, decalObjecct = pcall(function()
+								local decalObjecct = game:GetObjects("rbxassetid://"..id)[1]
+								return decalObjecct
+							end)
+							if success then
+								return decalObjecct.Texture
+							elseif string.gsub(id,"%D","") == id then
+								return "rbxassetid://".. id
+							else
+								return id
+							end
+						end
+						if v:IsA("Shirt") and string.gsub(v.ShirtTemplate,"%D","") == "855777285" and HumanoidDescription.Shirt then
+							v.ShirtTemplate = convertId(HumanoidDescription.Shirt)
+						elseif v:IsA("Pants") and string.gsub(v.PantsTemplate,"%D","") == "867826313" and HumanoidDescription.Pants then
+							v.PantsTemplate = convertId(HumanoidDescription.Pants)
+						end
 						DataDetail.HPClothes[v.ClassName] = v
 					end
 				end
@@ -15629,10 +15754,10 @@ function RoClothes(Player)
 							end
 							if Clothes[c].HPFunction then
 								if typeof(Clothes[c].HPFunction) == "string" then
-									Function[Clothes[c].HPFunction](false,Character,Data)
+									Function[Clothes[c].HPFunction](false,Character,Data,c)
 								elseif typeof(Clothes[c].HPFunction) == "table" then
 									for i, v in pairs(Clothes[c].HPFunction) do
-										Function[v](false,Character,Data)
+										Function[v](false,Character,Data,c)
 									end
 								end
 							end
@@ -15652,10 +15777,10 @@ function RoClothes(Player)
 							end
 							if Clothes[c].HPFunction then
 								if typeof(Clothes[c].HPFunction) == "string" then
-									Function[Clothes[c].HPFunction](true,Character,Data)
+									Function[Clothes[c].HPFunction](true,Character,Data,c)
 								elseif typeof(Clothes[c].HPFunction) == "table" then
 									for i, v in pairs(Clothes[c].HPFunction) do
-										Function[v](true,Character,Data)
+										Function[v](true,Character,Data,c)
 									end
 								end
 							end
@@ -15703,10 +15828,10 @@ function RoClothes(Player)
 							end
 							if Clothes[c].HPFunction then
 								if typeof(Clothes[c].HPFunction) == "string" then
-									Function[Clothes[c].HPFunction](false,Character,Data)
+									Function[Clothes[c].HPFunction](false,Character,Data,c)
 								elseif typeof(Clothes[c].HPFunction) == "table" then
 									for i, v in pairs(Clothes[c].HPFunction) do
-										Function[v](false,Character,Data)
+										Function[v](false,Character,Data,c)
 									end
 								end
 							end
@@ -15726,10 +15851,10 @@ function RoClothes(Player)
 							end
 							if Clothes[c].HPFunction then
 								if typeof(Clothes[c].HPFunction) == "string" then
-									Function[Clothes[c].HPFunction](true,Character,Data)
+									Function[Clothes[c].HPFunction](true,Character,Data,c)
 								elseif typeof(Clothes[c].HPFunction) == "table" then
 									for i, v in pairs(Clothes[c].HPFunction) do
-										Function[v](true,Character,Data)
+										Function[v](true,Character,Data,c)
 									end
 								end
 							end
@@ -16189,6 +16314,7 @@ function RoClothes(Player)
 					loadupBundle = settings.loadupBundle
 					loadupExecute = settings.loadupExecute
 					loadupClosed = settings.loadupClosed
+					loadupFPerson = settings.loadupFPerson
 					KEYBIND = settings.KEYBIND or KEYBIND
 					hpKEYBIND = settings.hpKEYBIND or hpKEYBIND
 					dpKEYBIND = settings.dpKEYBIND or dpKEYBIND
@@ -16491,7 +16617,8 @@ function RoClothes(Player)
 							task.wait(.3)
 							cd = false
 							tap = false
-							if data["Healing"] == true and (data["SavedTopHP"] < data["TopHP"] or data["SavedBottomHP"] < data["BottomHP"]) then
+							if data["Healing"] == true and (data["TopHP"] ~= "" and data["SavedTopHP"] < data["TopHP"] 
+								or data["BottomHP"] ~= "" and data["SavedBottomHP"] < data["BottomHP"]) then
 								local healTime = 0
 								local timeAccumulated = 0
 								local totalTime = 0
@@ -16517,15 +16644,18 @@ function RoClothes(Player)
 								repairTween:Play()
 								repeat
 									GUIObject.repairBar.Visible = true
-									if data["SavedTopHP"] >= data["TopHP"] and data["SavedBottomHP"] >= data["BottomHP"] then
+									if (not tonumber(data["TopHP"]) or data["SavedTopHP"] >= data["TopHP"]) and 
+										(not tonumber(data["BottomHP"]) or data["SavedBottomHP"] >= data["BottomHP"]) then
 										data["Healing"] = false
 									end
 									local focus
 									local timeRequired
-									if data["BottomHP"] ~= "" and (data["SavedBottomHP"] <= 0 or data["SavedTopHP"]/data["TopHP"] >= data["SavedBottomHP"]/data["BottomHP"]) then
+									if data["BottomHP"] ~= "" and (data["TopHP"] == "" 
+										or data["SavedBottomHP"] <= 0 or data["SavedTopHP"]/data["TopHP"] >= data["SavedBottomHP"]/data["BottomHP"]) then
 										focus = "BottomHP"
 										timeRequired = math.max((data["BottomHP"]/math.max(data["SavedBottomHP"],1))*0.04,.5)
-									elseif data["TopHP"] ~= "" and (data["SavedTopHP"] <= 0 or data["SavedTopHP"]/data["TopHP"] < data["SavedBottomHP"]/data["BottomHP"]) then
+									elseif data["TopHP"] ~= "" and (data["BottomHP"] == "" 
+										or data["SavedTopHP"] <= 0 or data["SavedTopHP"]/data["TopHP"] < data["SavedBottomHP"]/data["BottomHP"]) then
 										focus = "TopHP"
 										timeRequired = math.max((data["TopHP"]/math.max(data["SavedTopHP"],1))*0.04,.5)
 									end
@@ -17059,10 +17189,10 @@ function RoClothes(Player)
 													end
 													if Clothes[c].HPFunction then
 														if typeof(Clothes[c].HPFunction) == "string" then
-															Function[Clothes[c].HPFunction](false,chr,PlayerName)
+															Function[Clothes[c].HPFunction](false,chr,PlayerName,c)
 														elseif typeof(Clothes[c].HPFunction) == "table" then
 															for i, v in pairs(Clothes[c].HPFunction) do
-																Function[v](false,chr,PlayerName)
+																Function[v](false,chr,PlayerName,c)
 															end
 														end
 													end
@@ -17082,68 +17212,16 @@ function RoClothes(Player)
 													end
 													if Clothes[c].HPFunction then
 														if typeof(Clothes[c].HPFunction) == "string" then
-															Function[Clothes[c].HPFunction](true,chr,PlayerName)
+															Function[Clothes[c].HPFunction](true,chr,PlayerName,c)
 														elseif typeof(Clothes[c].HPFunction) == "table" then
 															for i, v in pairs(Clothes[c].HPFunction) do
-																Function[v](true,chr,PlayerName)
+																Function[v](true,chr,PlayerName,c)
 															end
 														end
 													end
 												end
 											end
 										end
-										--[[
-										if PData.CurrentPartList["Organ"]["Left Arm"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Left Arm"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Right Arm"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Right Arm"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Clothes"]["Torso Shirt"] then
-											transparent(PData.CurrentPartList["Clothes"]["Torso Shirt"],1)
-										end
-										if PData.HPClothes.Shirt ~= "" and not tonumber(PData.HPClothes.Shirt) then
-											if not PData.HPClothes.Pants then
-												Function.ShirtTexture(PData.CurrentPartList["Organ"]["Torso"],chr,{Shirt = PData.HPClothes.Shirt},PlayerName)
-											end
-											Function.ShirtTexture(PData.CurrentPartList["Organ"]["Left Arm"],chr,{Shirt = PData.HPClothes.Shirt},PlayerName)
-											Function.ShirtTexture(PData.CurrentPartList["Organ"]["Right Arm"],chr,{Shirt = PData.HPClothes.Shirt},PlayerName)
-										end
-
-										if PData.CurrentPartList["Organ"]["Left Breast"] then
-											transparent(PData.CurrentPartList["Organ"]["Left Breast"],0)
-											if PData.CurrentPartList["Organ"]["Left Nipple"] then
-												transparent(PData.CurrentPartList["Organ"]["Left Nipple"],0)
-											end
-										end
-										if PData.CurrentPartList["Organ"]["Right Breast"] then
-											transparent(PData.CurrentPartList["Organ"]["Right Breast"],0)
-											if PData.CurrentPartList["Organ"]["Right Nipple"] then
-												transparent(PData.CurrentPartList["Organ"]["Right Nipple"],0)
-											end
-										end
-
-										for i, v in pairs(PData.CurrentPartList.AreolaDecal) do
-											if v.Name == "Left Breast" or v.Name == "Right Breast" then
-												i.Transparency = 0
-											else
-												i.Transparency = 1
-											end
-										end
-										if PData.CurrentPartList["Clothes"]["Breasts Shirt"] then
-											transparent(PData.CurrentPartList["Clothes"]["Left Breast 2"],1)
-											transparent(PData.CurrentPartList["Clothes"]["Right Breast 2"],1)
-											transparent(PData.CurrentPartList["Clothes"]["Breasts Shirt"],1)
-											transparent(PData.CurrentPartList["Clothes"]["Breasts Pants"],1)
-										end
-										if PData.CurrentPartList["Clothes"]["Right Butt Shirt"] then
-											transparent(PData.CurrentPartList["Clothes"]["Left Butt Shirt"],1)
-											transparent(PData.CurrentPartList["Clothes"]["Right Butt Shirt"],1)
-										end
-										if PData.CurrentPartList["Clothes"]["Right Butt Shirt Method2"] then
-											transparent(PData.CurrentPartList["Clothes"]["Left Butt Shirt Method2"],1)
-											transparent(PData.CurrentPartList["Clothes"]["Right Butt Shirt Method2"],1)
-										end]]
 									end
 								elseif PData.TopHP ~= "" and 
 									(PData.HardcoreHP == false and h.MaxHealth-h.Health < PData.TopHP or
@@ -17234,10 +17312,10 @@ function RoClothes(Player)
 													end
 													if Clothes[c].HPFunction then
 														if typeof(Clothes[c].HPFunction) == "string" then
-															Function[Clothes[c].HPFunction](false,chr,PlayerName)
+															Function[Clothes[c].HPFunction](false,chr,PlayerName,c)
 														elseif typeof(Clothes[c].HPFunction) == "table" then
 															for i, v in pairs(Clothes[c].HPFunction) do
-																Function[v](false,chr,PlayerName)
+																Function[v](false,chr,PlayerName,c)
 															end
 														end
 													end
@@ -17257,68 +17335,16 @@ function RoClothes(Player)
 													end
 													if Clothes[c].HPFunction then
 														if typeof(Clothes[c].HPFunction) == "string" then
-															Function[Clothes[c].HPFunction](true,chr,PlayerName)
+															Function[Clothes[c].HPFunction](true,chr,PlayerName,c)
 														elseif typeof(Clothes[c].HPFunction) == "table" then
 															for i, v in pairs(Clothes[c].HPFunction) do
-																Function[v](true,chr,PlayerName)
+																Function[v](true,chr,PlayerName,c)
 															end
 														end
 													end
 												end
 											end
 										end
-										--[[
-										if PData.CurrentPartList["Organ"]["Left Arm"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Left Arm"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Right Arm"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Right Arm"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Clothes"]["Torso Shirt"] then
-											transparent(PData.CurrentPartList["Clothes"]["Torso Shirt"],PData.CurrentPartList["Clothes"]["Torso Shirt"]:GetAttribute("Alpha") or 0)
-										end
-										if (not chr:FindFirstChildOfClass("Pants") or not PData.HPClothes.Pants) and PData.CurrentPartList["Organ"]["Torso"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Torso"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if chr:FindFirstChildOfClass("Shirt") then
-											Function.ShirtTexture(PData.CurrentPartList["Organ"]["Left Arm"],chr,{Shirt = chr:FindFirstChildOfClass("Shirt")},PlayerName)
-											Function.ShirtTexture(PData.CurrentPartList["Organ"]["Right Arm"],chr,{Shirt = chr:FindFirstChildOfClass("Shirt")},PlayerName)
-										end
-
-										if PData.CurrentPartList["Organ"]["Left Breast"] then
-											transparent(PData.CurrentPartList["Organ"]["Left Breast"],1)
-											if PData.CurrentPartList["Organ"]["Left Nipple"] then
-												transparent(PData.CurrentPartList["Organ"]["Left Nipple"],1)
-											end
-										end
-										if PData.CurrentPartList["Organ"]["Right Breast"] then
-											transparent(PData.CurrentPartList["Organ"]["Right Breast"],1)
-											if PData.CurrentPartList["Organ"]["Right Nipple"] then
-												transparent(PData.CurrentPartList["Organ"]["Right Nipple"],1)
-											end
-										end
-
-										for i, v in pairs(PData.CurrentPartList.AreolaDecal) do
-											if v.Name == "Left Breast" or v.Name == "Right Breast" then
-												i.Transparency = 1
-											else
-												i.Transparency = 0
-											end
-										end
-										if PData.CurrentPartList["Clothes"]["Breasts Shirt"] then
-											transparent(PData.CurrentPartList["Clothes"]["Left Breast 2"],0)
-											transparent(PData.CurrentPartList["Clothes"]["Right Breast 2"],0)
-											transparent(PData.CurrentPartList["Clothes"]["Breasts Shirt"],PData.CurrentPartList["Clothes"]["Breasts Shirt"]:GetAttribute("Alpha") or 0)
-											transparent(PData.CurrentPartList["Clothes"]["Breasts Pants"],PData.CurrentPartList["Clothes"]["Breasts Pants"]:GetAttribute("Alpha") or 0)
-										end
-										if PData.CurrentPartList["Clothes"]["Right Butt Shirt"] then
-											transparent(PData.CurrentPartList["Clothes"]["Left Butt Shirt"],PData.CurrentPartList["Clothes"]["Left Butt Shirt"]:GetAttribute("Alpha") or 0)
-											transparent(PData.CurrentPartList["Clothes"]["Right Butt Shirt"],PData.CurrentPartList["Clothes"]["Right Butt Shirt"]:GetAttribute("Alpha") or 0)
-										end
-										if PData.CurrentPartList["Clothes"]["Right Butt Shirt Method2"] then
-											transparent(PData.CurrentPartList["Clothes"]["Left Butt Shirt Method2"],PData.CurrentPartList["Clothes"]["Left Butt Shirt Method2"]:GetAttribute("Alpha") or 0)
-											transparent(PData.CurrentPartList["Clothes"]["Right Butt Shirt Method2"],PData.CurrentPartList["Clothes"]["Right Butt Shirt Method2"]:GetAttribute("Alpha") or 0)
-										end]]
 									end
 								end
 								-- bottom --
@@ -17412,10 +17438,10 @@ function RoClothes(Player)
 													end
 													if Clothes[c].HPFunction then
 														if typeof(Clothes[c].HPFunction) == "string" then
-															Function[Clothes[c].HPFunction](false,chr,PlayerName)
+															Function[Clothes[c].HPFunction](false,chr,PlayerName,c)
 														elseif typeof(Clothes[c].HPFunction) == "table" then
 															for i, v in pairs(Clothes[c].HPFunction) do
-																Function[v](false,chr,PlayerName)
+																Function[v](false,chr,PlayerName,c)
 															end
 														end
 													end
@@ -17435,39 +17461,16 @@ function RoClothes(Player)
 													end
 													if Clothes[c].HPFunction then
 														if typeof(Clothes[c].HPFunction) == "string" then
-															Function[Clothes[c].HPFunction](true,chr,PlayerName)
+															Function[Clothes[c].HPFunction](true,chr,PlayerName,c)
 														elseif typeof(Clothes[c].HPFunction) == "table" then
 															for i, v in pairs(Clothes[c].HPFunction) do
-																Function[v](true,chr,PlayerName)
+																Function[v](true,chr,PlayerName,c)
 															end
 														end
 													end
 												end
 											end
 										end
-
-										--[[if PData.CurrentPartList["Organ"]["Left Leg"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Left Leg"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Right Leg"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Right Leg"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Left Butt"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Left Butt"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Right Butt"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Right Butt"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Torso"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Torso"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.HPClothes.Pants ~= "" and not tonumber(PData.HPClothes.Pants) then
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Torso"],chr,{Pants = PData.HPClothes.Pants},PlayerName)
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Left Leg"],chr,{Pants = PData.HPClothes.Pants},PlayerName)
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Right Leg"],chr,{Pants = PData.HPClothes.Pants},PlayerName)
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Left Butt"],chr,{Pants = PData.HPClothes.Pants},PlayerName)
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Right Butt"],chr,{Pants = PData.HPClothes.Pants},PlayerName)
-										end]]
 									end
 								elseif PData.BottomHP ~= "" and 
 									(PData.HardcoreHP == false and h.MaxHealth-h.Health < PData.BottomHP or
@@ -17556,10 +17559,10 @@ function RoClothes(Player)
 													end
 													if Clothes[c].HPFunction then
 														if typeof(Clothes[c].HPFunction) == "string" then
-															Function[Clothes[c].HPFunction](false,chr,PlayerName)
+															Function[Clothes[c].HPFunction](false,chr,PlayerName,c)
 														elseif typeof(Clothes[c].HPFunction) == "table" then
 															for i, v in pairs(Clothes[c].HPFunction) do
-																Function[v](false,chr,PlayerName)
+																Function[v](false,chr,PlayerName,c)
 															end
 														end
 													end
@@ -17577,39 +17580,16 @@ function RoClothes(Player)
 													end
 													if Clothes[c].HPFunction then
 														if typeof(Clothes[c].HPFunction) == "string" then
-															Function[Clothes[c].HPFunction](true,chr,PlayerName)
+															Function[Clothes[c].HPFunction](true,chr,PlayerName,c)
 														elseif typeof(Clothes[c].HPFunction) == "table" then
 															for i, v in pairs(Clothes[c].HPFunction) do
-																Function[v](true,chr,PlayerName)
+																Function[v](true,chr,PlayerName,c)
 															end
 														end
 													end
 												end
 											end
 										end
-
-										--[[if PData.CurrentPartList["Organ"]["Left Leg"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Left Leg"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Right Leg"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Right Leg"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Left Butt"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Left Butt"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Right Butt"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Right Butt"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if PData.CurrentPartList["Organ"]["Torso"]:FindFirstChildOfClass("SurfaceAppearance") then
-											PData.CurrentPartList["Organ"]["Torso"]:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
-										end
-										if chr:FindFirstChildOfClass("Pants") then
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Torso"],chr,{Pants = chr:FindFirstChildOfClass("Pants")},PlayerName)
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Left Leg"],chr,{Pants = chr:FindFirstChildOfClass("Pants")},PlayerName)
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Right Leg"],chr,{Pants = chr:FindFirstChildOfClass("Pants")},PlayerName)
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Left Butt"],chr,{Pants = chr:FindFirstChildOfClass("Pants")},PlayerName)
-											Function.PantsTexture(PData.CurrentPartList["Organ"]["Right Butt"],chr,{Pants = chr:FindFirstChildOfClass("Pants")},PlayerName)
-										end]]
 									end
 								end
 
@@ -17650,19 +17630,27 @@ function RoClothes(Player)
 									if PData.TopHP ~= "" then
 										GUIObject.topHPDisplay.Text = math.clamp(math.round((PData.SavedTopHP/PData.TopHP)*100),0,100).."%"
 										GUIObject.topHPDisplay.TextColor3 = Color3.new(1-PData.SavedTopHP/PData.TopHP,PData.SavedTopHP/PData.TopHP,0)
+									else
+										GUIObject.topHPDisplay.Text = ""
 									end
 									if PData.BottomHP ~= "" then 
 										GUIObject.bottomHPDisplay.Text = math.clamp(math.round((PData.SavedBottomHP/PData.BottomHP)*100),0,100).."%"
 										GUIObject.bottomHPDisplay.TextColor3 = Color3.new(1-PData.SavedBottomHP/PData.BottomHP,PData.SavedBottomHP/PData.BottomHP,0)
+									else
+										GUIObject.bottomHPDisplay.Text = ""
 									end
 								else
 									if PData.TopHP ~= "" then
 										GUIObject.topHPDisplay.Text = math.clamp(math.round((1-(h.MaxHealth-h.Health)/PData.TopHP)*100),0,100).."%"
 										GUIObject.topHPDisplay.TextColor3 = Color3.new(1-(1-(h.MaxHealth-h.Health)/PData.TopHP),(1-(h.MaxHealth-h.Health)/PData.TopHP),0)
+									else
+										GUIObject.topHPDisplay.Text = ""
 									end
 									if PData.BottomHP ~= "" then
 										GUIObject.bottomHPDisplay.Text = math.clamp(math.round((1-(h.MaxHealth-h.Health)/PData.BottomHP)*100),0,100).."%"
 										GUIObject.bottomHPDisplay.TextColor3 = Color3.new(1-(1-(h.MaxHealth-h.Health)/PData.BottomHP),(1-(h.MaxHealth-h.Health)/PData.BottomHP),0)
+									else
+										GUIObject.bottomHPDisplay.Text = ""
 									end
 								end
 							end
@@ -17876,8 +17864,8 @@ function RoClothes(Player)
 						if Method == 2 or Method == 3 then
 							Base = DataList.Character:FindFirstChild(Base.Name)
 						end
-						if --Part.Transparency == PlayerData[PlayerName].CurrentPartList.OldTransparency[Base] and 
-							Base.Transparency ~= DataList.CurrentPartList.OldTransparency[Base] then
+						if --Part.Transparency == PlayerData[PlayerName].OldTransparency[Base] and 
+							Base.Transparency ~= DataList.OldTransparency[Base] then
 							Part.Transparency = math.clamp(Base.Transparency,Part:GetAttribute("maxTransparencyRC") or -math.huge,math.huge)
 							updated = true
 						end
@@ -17936,6 +17924,14 @@ function RoClothes(Player)
 							]]
 							end
 						end
+					end
+
+					if Part.Material == Enum.Material.Glass and Part.Transparency >= 1 then
+						Part:AddTag("RCGlassMat")
+						Part.Material = Enum.Material.Neon
+					elseif Part.Material == Enum.Material.Neon and Part:HasTag("RCGlassMat") and Part.Transparency < 1 then
+						Part:RemoveTag("RCGlassMat")
+						Part.Material = Enum.Material.Glass
 					end
 				end
 			end
@@ -17999,8 +17995,12 @@ function RoClothes(Player)
 								return DataList.CurrentPartList["TrueMeshSize"].Part
 							end)
 							if success then
-								CalcSize = trueSize.Size*SM.Scale
-								BodySize = BodyPartSize["HeadMeshFix"]
+								local x = 1-(1.198/math.max(trueSize.Size.X,1.198))
+								local y = 1-(1.202/math.max(trueSize.Size.Y,1.202))
+								local z = 1-(1.198/math.max(trueSize.Size.Z,1.198))
+								local scale = Vector3.new(SM.Scale.X+x,SM.Scale.Y+y,SM.Scale.Z+z)
+								CalcSize = scale
+								BodySize = BodyPartSize["HeadScale"]
 							else
 								CalcSize = SM.Scale
 								BodySize = BodyPartSize["HeadScale"]
@@ -18302,12 +18302,12 @@ function RoClothes(Player)
 					local T = Property.T
 
 					if T then
+						PlayerData[PlayerName].OldTransparency[Part] = Part.Transparency
 						if PlayerData[PlayerName].RealtimeBodyTransparency == true then
-							PlayerData[PlayerName].CurrentPartList.OldTransparency[Part] = Part.Transparency
 							Part.LocalTransparencyModifier = T
 						else
-							if not PlayerData[PlayerName].CurrentPartList.OldTransparency[Part] then
-								PlayerData[PlayerName].CurrentPartList.OldTransparency[Part] = Part.Transparency
+							if not PlayerData[PlayerName].CurrentPartList.OriginalTransparency[Part] then
+								PlayerData[PlayerName].CurrentPartList.OriginalTransparency[Part] = Part.Transparency
 							end
 							Part.Transparency = T
 						end
@@ -18878,6 +18878,49 @@ function RoClothes(Player)
 	--------------------------------------------------------------------------------------------------------------
 	--------------------------------------------------------------------------------------------------------------
 	]]
+	
+	function Function.compileOvertime()
+		task.spawn(function()
+			local filesFound = env.listfiles("RClothesLerp/Bundles")
+			local t = {}
+			for i, v in pairs(filesFound) do
+				if env.isfile(v) then
+					local b = HS:JSONDecode(env.readfile(v))
+					local storedName = b.BundleName
+					b["BundleName"] = nil
+
+					local function fromJSON(t)
+						for i, v in pairs(t) do
+							local value,original = Function.convertFromJSON(v)
+							t[i] = value
+							if typeof(v) == "table" and original then
+								fromJSON(v)
+							end
+						end
+					end
+					fromJSON(b)
+
+					t[storedName] = b
+				end
+			end
+			local function toJSON(t)
+				for i, v in pairs(t) do
+					if typeof(v) == "table" then
+						toJSON(v)
+					else
+						t[i] = Function.convertToJSON(v)
+					end
+				end
+			end
+			toJSON(t)
+			if #filesFound > 0 then
+				env.writefile("RClothesLerp/BundleLoader.json", HS:JSONEncode(t))
+			else
+				env.delfile("RClothesLerp/BundleLoader.json")
+			end
+		end)
+	end
+	
 
 	local HPButtons = {}
 	function Function.GUIFunc()
@@ -19169,23 +19212,25 @@ function RoClothes(Player)
 					local HumanoidDescription = PS:GetHumanoidDescriptionFromUserId(UsernameId)
 
 					for i, accessory in pairs(HumanoidDescription:GetAccessories(true)) do
-						if accessory then
-							local AccessoryInfo = MPS:GetProductInfo(accessory.AssetId)
+						task.spawn(function()
+							if accessory then
+								local AccessoryInfo = MPS:GetProductInfo(accessory.AssetId)
 
-							local Button = Function.ButtonCreate(AccessoryInfo.Name, GUIObject.Catalog_3:FindFirstChild(SelectPlayer))
+								local Button = Function.ButtonCreate(AccessoryInfo.Name, GUIObject.Catalog_3:FindFirstChild(SelectPlayer))
 
-							local AccessoryRemoveButtonConnect
-							AccessoryRemoveButtonConnect = Button:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
-								if not table.find(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId) then
-									table.insert(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId)
-								end
+								local AccessoryRemoveButtonConnect
+								AccessoryRemoveButtonConnect = Button:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+									if not table.find(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId) then
+										table.insert(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId)
+									end
 
-								Button:Destroy()
-								AccessoryRemoveButtonConnect:Disconnect()
-							end)
+									Button:Destroy()
+									AccessoryRemoveButtonConnect:Disconnect()
+								end)
 
-							table.insert(AllConnect, AccessoryRemoveButtonConnect)
-						end
+								table.insert(AllConnect, AccessoryRemoveButtonConnect)
+							end
+						end)
 					end
 
 				end)
@@ -19317,6 +19362,14 @@ function RoClothes(Player)
 		end)
 
 		local BodyTransparencyConnect = GUIObject.BodyTransparencyButton.MouseButton1Click:Connect(function()
+			if PlayerData[SelectPlayer].RealtimeBodyTransparency == false then
+				if PlayerData[SelectPlayer].CurrentPartList.OriginalTransparency then
+					for i, v in pairs(PlayerData[SelectPlayer].CurrentPartList.OriginalTransparency) do
+						i.Transparency = v
+						i.LocalTransparencyModifier = v
+					end
+				end
+			end
 			PlayerData[SelectPlayer].RealtimeBodyTransparency = not PlayerData[SelectPlayer].RealtimeBodyTransparency
 
 			Function.GUIUpdate()
@@ -19427,23 +19480,25 @@ function RoClothes(Player)
 						local HumanoidDescription = PS:GetHumanoidDescriptionFromOutfitId(PlayerData[SelectPlayer].CatalogOutfitId)
 
 						for i, accessory in pairs(HumanoidDescription:GetAccessories(true)) do
-							if accessory then
-								local AccessoryInfo = MPS:GetProductInfo(accessory.AssetId)
+							task.spawn(function()
+								if accessory then
+									local AccessoryInfo = MPS:GetProductInfo(accessory.AssetId)
 
-								local Button = Function.ButtonCreate(AccessoryInfo.Name, GUIObject.Catalog_3:FindFirstChild(SelectPlayer))
+									local Button = Function.ButtonCreate(AccessoryInfo.Name, GUIObject.Catalog_3:FindFirstChild(SelectPlayer))
 
-								local AccessoryRemoveButtonConnect
-								AccessoryRemoveButtonConnect = Button:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
-									if not table.find(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId) then
-										table.insert(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId)
-									end
+									local AccessoryRemoveButtonConnect
+									AccessoryRemoveButtonConnect = Button:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+										if not table.find(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId) then
+											table.insert(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId)
+										end
 
-									Button:Destroy()
-									AccessoryRemoveButtonConnect:Disconnect()
-								end)
+										Button:Destroy()
+										AccessoryRemoveButtonConnect:Disconnect()
+									end)
 
-								table.insert(AllConnect, AccessoryRemoveButtonConnect)
-							end
+									table.insert(AllConnect, AccessoryRemoveButtonConnect)
+								end
+							end)
 						end
 
 					end)
@@ -19476,7 +19531,41 @@ function RoClothes(Player)
 		local BundleButtons = {}
 		local ClothesButtons = {}
 		local RecolorButtons = {}
-
+		
+		local function convertTableToString(t,indent)
+			indent = indent or 0
+			local s = ""
+			for i, v in pairs(t) do
+				for i = 1, indent do
+					s = s .. "	"
+				end
+				if typeof(v) == "table" then
+					if type(i) == "number" then
+						s = s ..'['..tostring(i)..'] = { \n'
+					else
+						s = s ..'["'..tostring(i)..'"] = { \n'
+					end
+					s = s .. convertTableToString(v,indent+1)
+					for i = 1, indent do
+						s = s .. "	"
+					end
+					s = s .. "}, \n"
+				else
+					if type(i) == "number" then
+						s = s ..Function.toFormatString(v)..", \n"
+					else
+						s = s ..'["'..tostring(i)..'"] = '..Function.toFormatString(v)..", \n"
+					end
+				end
+			end
+			return s
+		end
+		local function toBundleFormat(t,bundleName)
+			local s = "[".. Function.toFormatString(bundleName) .."] = { \n"
+			s = s .. convertTableToString(t, 1) .. "},"
+			return s
+		end
+		
 		local function checkBundle(v)
 
 			if v.ClearClothing and v.ClearClothing == true then
@@ -19521,23 +19610,25 @@ function RoClothes(Player)
 									local HumanoidDescription = PS:GetHumanoidDescriptionFromUserId(UsernameId)
 
 									for i, accessory in pairs(HumanoidDescription:GetAccessories(true)) do
-										if accessory and not (v.Preset.CatalogRemove and table.find(v.Preset.CatalogRemove, accessory.AssetId)) then
-											local AccessoryInfo = MPS:GetProductInfo(accessory.AssetId)
+										task.spawn(function()
+											if accessory and not (v.Preset.CatalogRemove and table.find(v.Preset.CatalogRemove, accessory.AssetId)) then
+												local AccessoryInfo = MPS:GetProductInfo(accessory.AssetId)
 
-											local Button = Function.ButtonCreate(AccessoryInfo.Name, GUIObject.Catalog_3:FindFirstChild(SelectPlayer))
+												local Button = Function.ButtonCreate(AccessoryInfo.Name, GUIObject.Catalog_3:FindFirstChild(SelectPlayer))
 
-											local AccessoryRemoveButtonConnect
-											AccessoryRemoveButtonConnect = Button:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
-												if not table.find(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId) then
-													table.insert(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId)
-												end
+												local AccessoryRemoveButtonConnect
+												AccessoryRemoveButtonConnect = Button:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+													if not table.find(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId) then
+														table.insert(PlayerData[SelectPlayer].CatalogRemove, accessory.AssetId)
+													end
 
-												Button:Destroy()
-												AccessoryRemoveButtonConnect:Disconnect()
-											end)
+													Button:Destroy()
+													AccessoryRemoveButtonConnect:Disconnect()
+												end)
 
-											table.insert(AllConnect, AccessoryRemoveButtonConnect)
-										end
+												table.insert(AllConnect, AccessoryRemoveButtonConnect)
+											end
+										end)
 									end
 
 								end)
@@ -19778,7 +19869,7 @@ function RoClothes(Player)
 						Function.CharacterReset(SelectPlayer)
 						PlayerData[SelectPlayer] = Function.PlayerDataDefault()
 						for i, v in pairs(GUIObject.RecolorListFrame:GetChildren()) do
-							if v:IsA("TextButton") then
+							if v:IsA("Frame") then
 								v:Destroy()
 							end
 						end
@@ -19793,7 +19884,7 @@ function RoClothes(Player)
 					end
 
 					checkBundle(v)
-				else
+				elseif DetectingBundle == "loadup" then
 					DetectingBundle = false
 					GUIObject.Bundles.Visible = false
 					GUIObject.optionsFrame.Visible = true
@@ -19802,6 +19893,56 @@ function RoClothes(Player)
 					else
 						loadupBundle = BButton.Name
 					end
+				elseif DetectingBundle == "export" then
+					DetectingBundle = false
+					GUIObject.Bundles.Visible = false
+					GUIObject.optionsFrame.Visible = true
+					
+					local exportString = toBundleFormat(v, BButton.Name)
+					
+					local successfulCopy = pcall(function()
+						if env.copy then
+							GUIObject.exportButton.Text = "Copied exported bundle!"
+							env.copy(exportString)
+						else
+							error("no")
+						end
+					end)
+					if not successfulCopy then
+						GUIObject.exportButton.Text = "CANNOT COPY, EXPORTED TO CONSOLE"
+						print(exportString)
+					end
+					task.delay(2,function()
+						GUIObject.exportButton.Text = "Export Bundle"
+					end)
+				elseif DetectingBundle == "delete" then
+					local function sanitize(str)
+						for _, char in ipairs({"/", "<", ">", "?", "*", "|", "\ ","\\",'"', ":"}) do
+							str = string.gsub(str, char, "_")
+						end
+						return str
+					end
+					DetectingBundle = false
+					GUIObject.Bundles.Visible = false
+					GUIObject.optionsFrame.Visible = true
+
+					local success = pcall(function()
+						if env.delfile and env.isfile("RClothesLerp/Bundles/"..sanitize(BButton.Name)..".json") then
+							env.delfile("RClothesLerp/Bundles/"..sanitize(BButton.Name)..".json")
+						else
+							error("no")
+						end
+					end)
+					if not success then
+						GUIObject.delButton.Text = "CANNOT DELETE"
+					else
+						GUIObject.delButton.Text = BButton.Name.." Deleted"
+						BButton:Destroy()
+						Function.compileOvertime()
+					end
+					task.delay(2,function()
+						GUIObject.delButton.Text = "Delete Bundle"
+					end)
 				end
 
 				Function.GUIUpdate()
@@ -19811,7 +19952,10 @@ function RoClothes(Player)
 		end
 
 		if loadupBundle ~= nil and Bundle[loadupBundle] then
-			PlayerData[Player.Name].CurrentBundle = loadupBundle
+			local v = Bundle[loadupBundle]
+			if (not v.ClothingBundle or v.ClothingBundle == false) and (not v.IsPreset or v.IsPreset == false) then
+				PlayerData[Player.Name].CurrentBundle = loadupBundle
+			end
 			checkBundle(Bundle[loadupBundle])
 		elseif loadupBundle ~= nil and loadupBundle ~= "" then
 			warn('No bundle named "'.. loadupBundle ..'" was found!')
@@ -20130,7 +20274,31 @@ function RoClothes(Player)
 		end)
 
 		local loadupBundleConnect = GUIObject.bundleLoadButton.MouseButton1Click:Connect(function()
-			DetectingBundle = true
+			DetectingBundle = "loadup"
+			GUIObject.Bundles.Visible = true
+			GUIObject.optionsFrame.Visible = false
+
+			task.spawn(function()
+				repeat task.wait() until DetectingBundle == false or GUIObject.Bundles.Visible == false
+				DetectingBundle = false
+				Function.GUIUpdate()
+			end)
+		end)
+
+		local exportBundleConnect = GUIObject.exportButton.MouseButton1Click:Connect(function()
+			DetectingBundle = "export"
+			GUIObject.Bundles.Visible = true
+			GUIObject.optionsFrame.Visible = false
+
+			task.spawn(function()
+				repeat task.wait() until DetectingBundle == false or GUIObject.Bundles.Visible == false
+				DetectingBundle = false
+				Function.GUIUpdate()
+			end)
+		end)
+
+		local delBundleConnect = GUIObject.delButton.MouseButton1Click:Connect(function()
+			DetectingBundle = "delete"
 			GUIObject.Bundles.Visible = true
 			GUIObject.optionsFrame.Visible = false
 
@@ -20235,7 +20403,20 @@ function RoClothes(Player)
 					local success, ouput = pcall(function()
 						return loadstring(Text)()
 					end)
+					if not success then
+						local reFormat = "local import = {".. Text .."} return import"
+						success, ouput = pcall(function()
+							return loadstring(reFormat)()
+						end)
+					end
 					if success then
+						local function sanitize(str)
+							for _, char in ipairs({"/", "<", ">", "?", "*", "|", "\ ","\\",'"', ":"}) do
+								str = string.gsub(str, char, "_")
+							end
+							return str
+						end
+						
 						local allBundlesSuccess = true
 						local s, ouput = pcall(function()
 							for name, input in pairs(ouput) do
@@ -20323,7 +20504,7 @@ function RoClothes(Player)
 										checkBundle(input)
 
 										Function.GUIUpdate()
-									else
+									elseif DetectingBundle == "loadup" then
 										DetectingBundle = false
 										GUIObject.Bundles.Visible = false
 										GUIObject.optionsFrame.Visible = true
@@ -20332,6 +20513,50 @@ function RoClothes(Player)
 										else
 											loadupBundle = BButton.Name
 										end
+									elseif DetectingBundle == "export" then
+										DetectingBundle = false
+										GUIObject.Bundles.Visible = false
+										GUIObject.optionsFrame.Visible = true
+
+										local exportString = toBundleFormat(input, BButton.Name)
+
+										local successfulCopy = pcall(function()
+											if env.copy then
+												GUIObject.exportButton.Text = "Copied exported bundle!"
+												env.copy(exportString)
+											else
+												error("no")
+											end
+										end)
+										if not successfulCopy then
+											GUIObject.exportButton.Text = "CANNOT COPY, EXPORTED TO CONSOLE"
+											print(exportString)
+										end
+										task.delay(2,function()
+											GUIObject.exportButton.Text = "Export Bundle"
+										end)
+									elseif DetectingBundle == "delete" then
+										DetectingBundle = false
+										GUIObject.Bundles.Visible = false
+										GUIObject.optionsFrame.Visible = true
+
+										local success = pcall(function()
+											if env.delfile and env.isfile("RClothesLerp/Bundles/"..sanitize(name)..".json") then
+												env.delfile("RClothesLerp/Bundles/"..sanitize(name)..".json")
+											else
+												error("no")
+											end
+										end)
+										if not success then
+											GUIObject.delButton.Text = "CANNOT DELETE"
+										else
+											GUIObject.delButton.Text = name.." Deleted"
+											BButton:Destroy()
+											Function.compileOvertime()
+										end
+										task.delay(2,function()
+											GUIObject.delButton.Text = "Delete Bundle"
+										end)
 									end
 
 								end)
@@ -20388,50 +20613,10 @@ function RoClothes(Player)
 									end
 									convertTable(t)
 									t["BundleName"] = name
-									local function sanitize(str)
-										for _, char in ipairs({"/", "<", ">", "?", "*", "|", "\ ","\\",'"', ":"}) do
-											str = string.gsub(str, char, "_")
-										end
-										return str
-									end
 									local fileConvertedName = sanitize(name)
 									env.writefile("RClothesLerp/Bundles/"..fileConvertedName..".json", HS:JSONEncode(t))
 
-									task.spawn(function() -- recompile overtime --
-										local filesFound = env.listfiles("RClothesLerp/Bundles")
-										local t = {}
-										for i, v in pairs(filesFound) do
-											if env.isfile(v) then
-												local b = HS:JSONDecode(env.readfile(v))
-												local storedName = b.BundleName
-												b["BundleName"] = nil
-
-												local function fromJSON(t)
-													for i, v in pairs(t) do
-														local value,original = Function.convertFromJSON(v)
-														t[i] = value
-														if typeof(v) == "table" and original then
-															fromJSON(v)
-														end
-													end
-												end
-												fromJSON(b)
-
-												t[storedName] = b
-											end
-										end
-										local function toJSON(t)
-											for i, v in pairs(t) do
-												if typeof(v) == "table" then
-													toJSON(v)
-												else
-													t[i] = Function.convertToJSON(v)
-												end
-											end
-										end
-										toJSON(t)
-										env.writefile("RClothesLerp/BundleLoader.json", HS:JSONEncode(t))
-									end)
+									Function.compileOvertime()
 
 								end
 							end
@@ -20483,7 +20668,7 @@ function RoClothes(Player)
 		table.insert(AllConnect, NippleColorConnect)
 		table.insert(AllConnect, BreastsTypeConnect)
 		table.insert(AllConnect, OutfitIdConnect)
-		table.insert(AllConnect, BBCToggleConnect)
+		--table.insert(AllConnect, BBCToggleConnect)
 		table.insert(AllConnect, ClothesSearchConnect)
 		table.insert(AllConnect, BundleSearchConnect)
 		table.insert(AllConnect, TorsoTypeConnect)
@@ -20508,6 +20693,8 @@ function RoClothes(Player)
 		--table.insert(AllConnect, loadupBundleEnterConnect)
 		table.insert(AllConnect, saveConnect)
 		table.insert(AllConnect, importConnect)
+		table.insert(AllConnect, exportBundleConnect)
+		table.insert(AllConnect, delBundleConnect)
 	end
 
 	Function.UIStrokeCreate(GUIObject.PageFrame)
@@ -20577,6 +20764,8 @@ function RoClothes(Player)
 	Function.UIStrokeCreate(GUIObject.bundleLoad)
 	Function.UIStrokeCreate(GUIObject.FPersonLoadup)
 	Function.UIStrokeCreate(GUIObject.importBundle)
+	Function.UIStrokeCreate(GUIObject.exportBox)
+	Function.UIStrokeCreate(GUIObject.delFrame)
 
 	--Properties:
 
@@ -23025,7 +23214,7 @@ function RoClothes(Player)
 	GUIObject.importBundle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	GUIObject.importBundle.BorderColor3 = Color3.fromRGB(0, 0, 0)
 	GUIObject.importBundle.Position = UDim2.new(0.5, 0, 0.45, 0)
-	GUIObject.importBundle.Size = UDim2.new(0.891309202, 0, 0.4, 0)
+	GUIObject.importBundle.Size = UDim2.new(0.891309202, 0, 0.32, 0)
 	local UIGradient = Instance.new("UIGradient",GUIObject.importBundle)
 	local UICorner = Instance.new("UICorner",GUIObject.importBundle)
 	UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 21, 53)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 36, 121))}
@@ -23047,6 +23236,55 @@ function RoClothes(Player)
 	GUIObject.importBundleBox.TextWrapped = true
 	local UITextSizeConstraint = Instance.new("UITextSizeConstraint",GUIObject.importBundleBox)
 	UITextSizeConstraint.MaxTextSize = 30
+
+	GUIObject.exportBox.Name = "exportFrame"
+	GUIObject.exportBox.Parent = GUIObject.optionsFrame
+	GUIObject.exportBox.AnchorPoint = Vector2.new(0.5, 0)
+	GUIObject.exportBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	GUIObject.exportBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	GUIObject.exportBox.Position = UDim2.new(0.605, 0, 0.79, 0)
+	GUIObject.exportBox.Size = UDim2.new(0.681, 0, 0.0646399707, 0)
+	local UIGradient = Instance.new("UIGradient",GUIObject.exportBox)
+	local UICorner = Instance.new("UICorner",GUIObject.exportBox)
+	UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(68, 0, 35)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(145, 0, 56))}
+	UIGradient.Rotation = -90
+	UICorner.CornerRadius = UDim.new(0.25, 0)
+
+	GUIObject.exportButton.Name = "exportButton"
+	GUIObject.exportButton.Parent = GUIObject.exportBox
+	GUIObject.exportButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	GUIObject.exportButton.BackgroundTransparency = 1.000
+	GUIObject.exportButton.Size = UDim2.new(1, 0, 1, 0)
+	GUIObject.exportButton.Font = Enum.Font.Code
+	GUIObject.exportButton.Text = "Export Bundle"
+	GUIObject.exportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	GUIObject.exportButton.TextScaled = true
+	GUIObject.exportButton.TextSize = 14.000
+	GUIObject.exportButton.TextWrapped = true
+
+	GUIObject.delFrame.Name = "delFrame"
+	GUIObject.delFrame.Parent = GUIObject.optionsFrame
+	GUIObject.delFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	GUIObject.delFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	GUIObject.delFrame.Position = UDim2.new(0.05, 0, 0.79, 0)
+	GUIObject.delFrame.Size = UDim2.new(0.2, 0, 0.0646399707, 0)
+	local UIGradient = Instance.new("UIGradient",GUIObject.delFrame)
+	local UICorner = Instance.new("UICorner",GUIObject.delFrame)
+	UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(79, 0, 1)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(172, 0, 3))}
+	UIGradient.Rotation = -90
+	UICorner.CornerRadius = UDim.new(0.25, 0)
+
+	GUIObject.delButton.Name = "exportButton"
+	GUIObject.delButton.Parent = GUIObject.delFrame
+	GUIObject.delButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	GUIObject.delButton.BackgroundTransparency = 1.000
+	GUIObject.delButton.Size = UDim2.new(1, 0, 1, 0)
+	GUIObject.delButton.Font = Enum.Font.Code
+	GUIObject.delButton.Text = "Delete Bundle"
+	GUIObject.delButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	GUIObject.delButton.TextScaled = true
+	GUIObject.delButton.TextSize = 14.000
+	GUIObject.delButton.TextWrapped = true
 
 	GUIObject.HPListFrame.Name = "HPListFrame"
 	GUIObject.HPListFrame.Parent = GUIObject.HPFrame
